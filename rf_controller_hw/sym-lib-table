@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name "rp2040-zero")(type "KiCad")(uri "${KIPRJMOD}/rp2040-zero/rp2040-zero.kicad_sym")(options "")(descr ""))
+  (lib (name "rf_controller_hw")(type "KiCad")(uri "${KIPRJMOD}/rf_controller_hw.kicad_sym")(options "")(descr ""))
+)
