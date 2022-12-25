@@ -1,3 +1,0 @@
-[submodule "rf_controller_hw/rp2040-zero"]
-	path = rf_controller_hw/rp2040-zero
-	url = https://github.com/CountParadox/RP2040-Zero-Kicad.git

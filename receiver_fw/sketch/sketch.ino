@@ -1,16 +1,37 @@
+ /* 
+ * This file is part of the rf-controller (https://github.com/bnahill/rf-controller).
+ * Copyright (c) 2022 Ben Nahill.
+ * 
+ * This program is free software: you can redistribute it and/or modify  
+ * it under the terms of the GNU General Public License as published by  
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
 
-RF24 radio(9, 10); // CE, CSN
-const byte address[6] = "00001";
-boolean button_state = 0;
-int led_pin = 3;
+// !!! Set this to the channel on your controller!
+static constexpr uint8_t NRF_CHANNEL = 31;
+
+static constexpr uint8_t PIN_NRF_CE = 9;
+static constexpr uint8_t PIN_NRF_NCS = 10;
+
+RF24 radio(PIN_NRF_CE, PIN_NRF_NCS); // CE, CSN
+uint8_t const NRF_ADDRESS[6] = "00001";
 
 // Compact structure to convey the current input state
 typedef struct {
-  uint16_t joy_x;
-  uint16_t joy_y;
+  uint16_t joy_x; //!< Joystick X-axis range 0 (left) - 4095 (right)
+  uint16_t joy_y; //!< Joystick Y-axis range 0 (down) - 4095 (up)
   uint8_t up: 1;
   uint8_t down: 1;
   uint8_t left: 1;
@@ -24,7 +45,15 @@ typedef struct {
 // Force a check to make sure it got packed to the right size
 static_assert(sizeof(button_status_t) == 5, "button_status_t should be 5B");
 
-bool status_equal(button_status_t const &a, button_status_t const &b){
+/**
+ * @brief Compare two inputs of type button_status_t
+ * 
+ * @param a 
+ * @param b 
+ * @return true If equal (with analog inputs within some threshold)
+ * @return false If not equal
+ */
+bool status_equal(button_status_t const &a, button_status_t const &b) {
   if(a.up != b.up || a.down != b.down || a.left != b.left || a.right != b.right ||
      a.a != b.a || a.b != b.b || a.c != b.c || a.joy_push != b.joy_push){
     return false;
@@ -41,28 +70,29 @@ bool status_equal(button_status_t const &a, button_status_t const &b){
 }
 
 void setup() {
-  pinMode(6, OUTPUT);
   Serial.begin(9600);
   if (!radio.begin()) {
     Serial.println(F("radio hardware is not responding!!"));
     while (1) {}  // hold in infinite loop
   }
-  radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
-  radio.setChannel(31);
-  radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
-  radio.startListening();              //This sets the module as receiver
+  radio.openReadingPipe(0, NRF_ADDRESS);
+  radio.setChannel(NRF_CHANNEL);
+  // Since we never transmit this doesn't really matter. Adjust as needed if you do transmit!
+  radio.setPALevel(RF24_PA_MIN);
+  radio.startListening();
 }
 
-void loop()
-{
+void loop() {
   button_status_t button_status = {0};
   
-  if (radio.available())              //Looking for the data.
-  {
-    radio.read(&button_status, sizeof(button_status_t));    //Reading the data
+  // Periodically poll for data. If anything is available, run this block:
+  if (radio.available()) {
+    // Receive whatever data there is
+    radio.read(&button_status, sizeof(button_status_t));
 
     {
       // Print things out!
+      // !!! Remove this once you know you receive data from the controller
       char buffer[128] = {0}; // This is just a temporary place to format a string
       snprintf(buffer, sizeof(buffer), "Joy X %u, Y %u, PB %lu!!", button_status.joy_x, button_status.joy_y, (uint32_t)button_status.joy_push);
       Serial.println(buffer);
