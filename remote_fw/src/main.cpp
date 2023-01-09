@@ -204,6 +204,7 @@ void setup() {
   last_status = read_buttons();
 }
 
+static constexpr uint32_t SAMPLE_DELAY_MS = 10u;
 static constexpr uint32_t MIN_UPDATE_RATE_MS = 100u;
 static constexpr uint32_t LED_TIMEOUT_MS = 1000u;
 static constexpr uint32_t IDLE_TIMEOUT_MS = 5u * 60u * 1000u;
@@ -213,7 +214,7 @@ static uint32_t last_update_ms = 0u;
 
 void loop() {
   // put your main code here, to run repeatedly:
-  delay(10);
+  delay(SAMPLE_DELAY_MS);
   //Serial.println("Line");
   char buffer[128] = {0};
   button_status_t const status = read_buttons();
