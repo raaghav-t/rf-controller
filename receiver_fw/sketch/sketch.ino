@@ -18,15 +18,29 @@
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
+#include <Servo.h>
+Servo leftServo;
+Servo rightServo;
 
 // !!! Set this to the channel on your controller!
-static constexpr uint8_t NRF_CHANNEL = 31;
+static constexpr uint8_t NRF_CHANNEL = 13;
 
 static constexpr uint8_t PIN_NRF_CE = 9;
 static constexpr uint8_t PIN_NRF_NCS = 10;
 
 RF24 radio(PIN_NRF_CE, PIN_NRF_NCS); // CE, CSN
 uint8_t const NRF_ADDRESS[6] = "00001";
+
+// Setup for Left and Right Wheels
+const int leftWheel = 7;
+const int rightWheel = 3;
+
+int leftState = 0;
+int rightState = 0;
+int mapped_joyyLeft = 0;
+int mapped_joyyRight = 0;
+int mapped_joyxLeft = 0;
+int mapped_joyxRight = 0;
 
 // Compact structure to convey the current input state
 typedef struct {
@@ -80,6 +94,11 @@ void setup() {
   // Since we never transmit this doesn't really matter. Adjust as needed if you do transmit!
   radio.setPALevel(RF24_PA_MIN);
   radio.startListening();
+
+  // Left and Right Wheels
+  leftServo.attach(7);
+  rightServo.attach(3);
+  
 }
 
 void loop() {
@@ -104,5 +123,19 @@ void loop() {
     }
 
     // Now here do things with your input in button_status
+    
+    //Left Wheel
+    mapped_joyyLeft = map(button_status.joy_y, 0, 4095, 0, 90);
+    mapped_joyxLeft = map(button_status.joy_y, 0, 4095, 0, 90);
+    leftState = mapped_joyyLeft + mapped_joyxLeft;
+    leftServo.write(leftState); 
+
+    //Right Wheel
+    mapped_joyyRight = map(button_status.joy_y, 0, 4095, 90, 0);
+    mapped_joyxRight = map(button_status.joy_x, 0, 4095, 90, 0);
+    rightState = mapped_joyyRight + mapped_joyxRight;
+    rightServo.write(rightState);
+
+    
   }
 }
